@@ -6,23 +6,29 @@ import { sign, verify } from "jsonwebtoken"
 import {AppDataSource} from "../../app-data-source"
 
 export const Register = async (req: Request, res: Response) => {
-    const { password, password_confirm, ...body } = req.body
+
+    
+    const {password, password_confirm, ...body} = req.body;
+
     if (password !== password_confirm) {
         return res.status(400).send({
-            message: "Password dn't match!"
+            message: "Password's do not match!"
         })
     }
+
     const user = await getRepository(User).save({
         ...body,
         password: await bcryptjs.hash(password, 10),
-        is_ambassador: false
-        // password_confirm": "aa"
-    })
-    res.send(user)
+        is_ambassador: req.path === '/api/ambassador/register'
+    });
+
+    delete user.password;
+
+    res.send(user);
 }
 
 export const Login = async (req: Request, res: Response) => {
-    const options = { where: { email: req.body.email }, select: ["id", "password"] } as any;
+    const options = { where: { email: req.body.email }, select: ["id", "password",'is_ambassador'] } as any;
     const user = await getRepository(User).findOne(options);
 
     // const user = await getRepository(User).findOne({email: req.body.email});
@@ -42,17 +48,17 @@ export const Login = async (req: Request, res: Response) => {
         });
     }
 
-    // const adminLogin = req.path === '/api/admin/login';
+    const adminLogin = req.path === '/api/admin/login';
 
-    // if (user.is_ambassador && adminLogin) {
-    //     return res.status(401).send({
-    //         message: 'unauthorized'
-    //     });
-    // }
+    if (user.is_ambassador && adminLogin) {
+        return res.status(401).send({
+            message: 'unauthorized'
+        });
+    }
 
     const token = sign({
         id: user.id,
-        // scope: adminLogin ? "admin" : "ambassador"
+        scope: adminLogin ? "admin" : "ambassador"
     }, process.env.SECRET_KEY);
 
     res.cookie("jwt", token, {

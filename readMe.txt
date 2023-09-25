@@ -2,12 +2,15 @@ npm init -y
 
 npm i express cors
 
+login postman with socialite google using 
+abubakerDhakko9212@gmail.com
+
 npm i -D @types/express @types/cors typescript nodemon ts-node
 
 npm start
 
 sudo systemctl enable --now docker
-
+ 
 docker compose up
 
 npm i bcryptjs 
